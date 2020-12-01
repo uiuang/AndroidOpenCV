@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemClickListener {
 
 
     override fun onItemClick(adapter: AdapterView<*>?, view: View?, position: Int, id: Long) {
-        val map = getData() as Map<*, *>
+        val map = getData()[position]
 
         val intent = Intent(map["intent"] as Intent)
         intent.putExtra("title", map["title"] as String)

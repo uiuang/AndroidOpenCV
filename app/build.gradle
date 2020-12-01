@@ -1,6 +1,4 @@
-plugins {
-    id 'com.android.application'
-}
+apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
@@ -22,6 +20,9 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags "-std=c++17"
+                arguments "-DANDROID_STL=c++_shared"
+                //生成.so库的目标平台
+                abiFilters 'armeabi-v7a', 'arm64-v8a'
             }
         }
     }
@@ -39,8 +40,12 @@ android {
         }
     }
 
-    buildFeatures {
-        dataBinding = true
+    dataBinding {
+        enabled = true
+    }
+    //使用Kotlin实验特性
+    androidExtensions {
+        experimental = true
     }
     kotlinOptions{
         jvmTarget = "1.8"
@@ -62,7 +67,4 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation "androidx.core:core-ktx:+"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-}
-repositories {
-    mavenCentral()
 }
