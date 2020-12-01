@@ -3,7 +3,7 @@
 从C++开始学习Android OpenCV
 
 ## 关于项目
-借鉴[LearningAndroidOpenCV](https://github.com/onlyloveyd/LearningAndroidOpenCV)
+借鉴[LearningAndroidOpenCV](https://github.com/onlyloveyd/LearningAndroidOpenCV),准备从java转化为c++来学习OpenCV
 
 
 ## 系列文章
