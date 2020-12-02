@@ -50,12 +50,12 @@ class ReadAndWriteActivity : AppCompatActivity() {
             return
         }
         var picFileToBitmap: Bitmap = FileUtil.picFileToBitmap(mLenaPath)
-        var bitmap = ImageNativeUtils.imgRead(mLenaPath, currentImreadMode, picFileToBitmap)
+        val bitmap =
+                Bitmap.createBitmap(picFileToBitmap.width, picFileToBitmap.height, Bitmap.Config.ARGB_8888)
+        var bitmap1 = ImageNativeUtils.imgRead(mLenaPath, currentImreadMode, bitmap)
 //        currentMat = Imgcodecs.imread(mLenaPath, currentImreadMode)
-//        val bitmap =
-//                Bitmap.createBitmap(currentMat.width(), currentMat.height(), Bitmap.Config.ARGB_8888)
 //        Utils.matToBitmap(currentMat, bitmap)
-        iv_lena.setImageBitmap(bitmap)
+        iv_lena.setImageBitmap(bitmap1)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

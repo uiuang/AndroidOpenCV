@@ -17,15 +17,17 @@ using namespace std;
 
 extern "C" {
 bool BitmapToMat(JNIEnv *env, jobject obj_bitmap, cv::Mat &matrix);
-bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap);
+bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needPremultiplyAlpha);
 
-JNIEXPORT jobject JNICALL JNI_API(imgRead)(JNIEnv *env, jobject type, jstring filename, jint flag,jobject bitmap) {
-    Mat src= imread((const String) reinterpret_cast<const char *>(filename), flag);
-    MatToBitmap(env, src, bitmap);
+JNIEXPORT jobject JNICALL
+JNI_API(imgRead)(JNIEnv *env, jobject type, jstring filename, jint flag, jobject bitmap) {
+    const char *nativeScenePath = env->GetStringUTFChars(filename, 0);
+    Mat src = imread(nativeScenePath, flag);
+    MatToBitmap(env, src, bitmap, false);
     return bitmap;
 }
 
-bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap) {
+bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needPremultiplyAlpha) {
     void *bitmapPixels;
     AndroidBitmapInfo bitmapInfo;
     ASSERT_FALSE(AndroidBitmap_getInfo(env, obj_bitmap, &bitmapInfo) >= 0);
@@ -49,47 +51,41 @@ bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap) {
     //         1--灰度图片--grayImg---是--单通道图像
     //         2--RGB彩色图像---------是--3通道图像
     //         3--带Alph通道的RGB图像--是--4通道图像
+
     if (bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
-        cv::Mat tmp(bitmapInfo.height, bitmapInfo.width, CV_8UC4, bitmapPixels);
-        switch (matrix.type()) {
-            case CV_8UC1:
-//                cv::cvtColor(matrix, tmp, CV_GRAY2BGRA);
-                cv::cvtColor(matrix, tmp, cv::COLOR_GRAY2BGRA);
-                break;
-            case CV_8UC2:
-                cv::cvtColor(matrix, tmp, cv::COLOR_BGR5652BGRA);
-                break;
-            case CV_8UC3:
-                cv::cvtColor(matrix, tmp, cv::COLOR_RGB2BGRA);
-                break;
-            case CV_8UC4:
+        Mat tmp(bitmapInfo.height, bitmapInfo.width, CV_8UC4, bitmapPixels);
+        if (matrix.type() == CV_8UC1) {
+            LOGD("nMatToBitmap: CV_8UC1 -> RGBA_8888");
+            cvtColor(matrix, tmp, COLOR_GRAY2RGBA);
+        } else if (matrix.type() == CV_8UC3) {
+            LOGD("nMatToBitmap: CV_8UC3 -> RGBA_8888");
+            cvtColor(matrix, tmp, COLOR_RGB2RGBA);
+        } else if (matrix.type() == CV_8UC4) {
+            LOGD("nMatToBitmap: CV_8UC4 -> RGBA_8888");
+            if (needPremultiplyAlpha)
+                cvtColor(matrix, tmp, COLOR_RGBA2mRGBA);
+            else
                 matrix.copyTo(tmp);
-                break;
-            default:
-                AndroidBitmap_unlockPixels(env, obj_bitmap);
-                return false;
+        } else{
+            matrix.copyTo(tmp);
         }
+        return true;
     } else {
-        cv::Mat tmp(bitmapInfo.height, bitmapInfo.width, CV_8UC2, bitmapPixels);
-        switch (matrix.type()) {
-            case CV_8UC1:
-                cv::cvtColor(matrix, tmp, cv::COLOR_GRAY2BGR565);
-                break;
-            case CV_8UC2:
-                matrix.copyTo(tmp);
-                break;
-            case CV_8UC3:
-                cv::cvtColor(matrix, tmp, cv::COLOR_RGB2BGR565);
-                break;
-            case CV_8UC4:
-                //对应bitmap   RGBA_8888
-//                cv::cvtColor(mat, tmp, CV_BGRA2BGR565);
-                cv::cvtColor(matrix, tmp, cv::COLOR_BGRA2BGR565);
-                break;
-            default:
-                AndroidBitmap_unlockPixels(env, obj_bitmap);
-                return false;
+        // info.format == ANDROID_BITMAP_FORMAT_RGB_565
+        Mat tmp(bitmapInfo.height, bitmapInfo.width, CV_8UC2, bitmapPixels);
+        if (matrix.type() == CV_8UC1) {
+            LOGD("nMatToBitmap: CV_8UC1 -> RGB_565");
+            cvtColor(matrix, tmp, COLOR_GRAY2BGR565);
+        } else if (matrix.type() == CV_8UC3) {
+            LOGD("nMatToBitmap: CV_8UC3 -> RGB_565");
+            cvtColor(matrix, tmp, COLOR_RGB2BGR565);
+        } else if (matrix.type() == CV_8UC4) {
+            LOGD("nMatToBitmap: CV_8UC4 -> RGB_565");
+            cvtColor(matrix, tmp, COLOR_RGBA2BGR565);
+        } else{
+            matrix.copyTo(tmp);
         }
+        return true;
     }
     AndroidBitmap_unlockPixels(env, obj_bitmap);
     return true;
