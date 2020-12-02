@@ -5,6 +5,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
+
 using namespace cv;
 using namespace std;
 
@@ -21,8 +22,15 @@ bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needP
 
 JNIEXPORT jobject JNICALL
 JNI_API(imgRead)(JNIEnv *env, jobject type, jstring filename, jint flag, jobject bitmap) {
+//    Mat src;
+//    BitmapToMat(env, bitmap, src);
     const char *nativeScenePath = env->GetStringUTFChars(filename, 0);
     Mat src = imread(nativeScenePath, flag);
+    jintArray data = reinterpret_cast<jintArray>(src.data);
+    for (int i = 0; i < 10; ++i) {
+        LOGD("%d", data[i]);
+    }
+//    cv::addWeighted(src, 0.1, src1, 0.3, 0.0, src);
     MatToBitmap(env, src, bitmap, false);
     return bitmap;
 }
@@ -33,8 +41,7 @@ bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needP
     ASSERT_FALSE(AndroidBitmap_getInfo(env, obj_bitmap, &bitmapInfo) >= 0);
     ASSERT_FALSE(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888 ||
                  bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565);
-    ASSERT_FALSE(matrix.dims == 2 && bitmapInfo.height == (uint32_t) matrix.rows &&
-                 bitmapInfo.width == (uint32_t) matrix.cols);// 必须是 2 维矩阵，长宽一致
+    ASSERT_FALSE(matrix.dims == 2 );// 必须是 2 维矩阵，长宽一致
     ASSERT_FALSE(matrix.type() == CV_8UC1 || matrix.type() == CV_8UC3 || matrix.type() == CV_8UC4);
     ASSERT_FALSE(AndroidBitmap_lockPixels(env, obj_bitmap, &bitmapPixels) >= 0);
     ASSERT_FALSE(bitmapPixels);
@@ -52,11 +59,37 @@ bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needP
     //         2--RGB彩色图像---------是--3通道图像
     //         3--带Alph通道的RGB图像--是--4通道图像
 
+    LOGD("rows:%dcols:%d,channels:%d",matrix.rows,matrix.cols,matrix.channels());
     if (bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
-        Mat tmp(bitmapInfo.height, bitmapInfo.width, CV_8UC4, bitmapPixels);
+        if (matrix.channels() == 0) {
+
+        }
+        Mat tmp(matrix.cols, matrix.rows,  CV_8UC4, bitmapPixels);
+//        bitmapInfo.width = matrix.rows;
+//        bitmapInfo.height = matrix.cols;
+        Mat sz(Size(bitmapInfo.height, bitmapInfo.width), CV_8UC4);
+        int left = (sz.rows - matrix.rows) / 2;
+        int top = (sz.cols - matrix.cols) / 2;
+        int right = sz.rows - left;
+        int bottom = sz.cols - top;
+        LOGD("%d,%d,%d,%d",left,top,right,bottom);
+//        for (int row1 = 0; row1 < matrix.rows; ++row1) {
+//            for (int col1 = 0; col1 < matrix.cols; ++col1) {
+//                Vec4b src_pix  = matrix.at<Vec4b>(row1, col1);
+//                for (int row = left; row < right; ++row) {
+//                    for (int col = top; col < bottom; ++col) {
+//                        sz.at<Vec4b>(row , col ) = src_pix;
+//                    }
+//                }
+//            }
+//        }
+
+
         if (matrix.type() == CV_8UC1) {
             LOGD("nMatToBitmap: CV_8UC1 -> RGBA_8888");
-            cvtColor(matrix, tmp, COLOR_GRAY2RGBA);
+
+            cvtColor( matrix, tmp, COLOR_GRAY2RGBA);
+//            cv::convertScaleAbs(matrix,tmp,COLOR_GRAY2RGBA)
         } else if (matrix.type() == CV_8UC3) {
             LOGD("nMatToBitmap: CV_8UC3 -> RGBA_8888");
             cvtColor(matrix, tmp, COLOR_RGB2RGBA);
@@ -69,7 +102,6 @@ bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needP
         } else{
             matrix.copyTo(tmp);
         }
-        return true;
     } else {
         // info.format == ANDROID_BITMAP_FORMAT_RGB_565
         Mat tmp(bitmapInfo.height, bitmapInfo.width, CV_8UC2, bitmapPixels);
@@ -85,9 +117,27 @@ bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needP
         } else{
             matrix.copyTo(tmp);
         }
-        return true;
     }
     AndroidBitmap_unlockPixels(env, obj_bitmap);
     return true;
+}
+bool BitmapToMat(JNIEnv *env, jobject obj_bitmap, cv::Mat &matrix) {
+    void *bitmapPixels;//保存图片像素
+    AndroidBitmapInfo bitmapInfo;//保存图片参数
+    ASSERT_FALSE(AndroidBitmap_getInfo(env, obj_bitmap, &bitmapInfo) >= 0);//获取图片参数
+    ASSERT_FALSE(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888 ||
+                 bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565);//只支持 ARGB_8888和RGB_565
+    ASSERT_FALSE(AndroidBitmap_lockPixels(env, obj_bitmap, &bitmapPixels) >= 0);//获取图片参数（锁定内存块）
+    ASSERT_FALSE(bitmapPixels);
+    if (bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
+        cv::Mat tmp(bitmapInfo.height, bitmapInfo.width, CV_8UC4, bitmapPixels);//建立临时mat
+        tmp.copyTo(matrix);//拷贝目标matrix
+    } else {
+        cv::Mat tmp(bitmapInfo.height, bitmapInfo.width, CV_8UC2, bitmapPixels);
+        cv::cvtColor(tmp, matrix, cv::COLOR_BGRA2BGR565);
+    }
+    AndroidBitmap_unlockPixels(env, obj_bitmap);//解锁
+    return true;
+
 }
 }

@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -50,9 +51,40 @@ class ReadAndWriteActivity : AppCompatActivity() {
             return
         }
         var picFileToBitmap: Bitmap = FileUtil.picFileToBitmap(mLenaPath)
+        var width: Int = 0
+        var height: Int = 0
+        when (currentImreadMode) {
+            Imgcodecs.IMREAD_REDUCED_COLOR_2,
+            Imgcodecs.IMREAD_REDUCED_GRAYSCALE_2->{
+                width = picFileToBitmap.width / 2
+                height = picFileToBitmap.height / 2
+            }
+            Imgcodecs.IMREAD_REDUCED_COLOR_4,
+            Imgcodecs.IMREAD_REDUCED_GRAYSCALE_4->{
+                width = picFileToBitmap.width / 4
+                height = picFileToBitmap.height / 4
+            }
+            Imgcodecs.IMREAD_REDUCED_COLOR_8,
+            Imgcodecs.IMREAD_REDUCED_GRAYSCALE_8->{
+                width = picFileToBitmap.width / 8
+                height = picFileToBitmap.height / 8
+            }
+            Imgcodecs.IMREAD_IGNORE_ORIENTATION,
+            Imgcodecs.IMREAD_ANYDEPTH,
+            Imgcodecs.IMREAD_GRAYSCALE,
+            Imgcodecs.IMREAD_UNCHANGED,
+            Imgcodecs.IMREAD_ANYCOLOR,
+            Imgcodecs.IMREAD_LOAD_GDAL,
+            Imgcodecs.IMREAD_COLOR->{
+                width = picFileToBitmap.width
+                height = picFileToBitmap.height
+            }
+        }
         val bitmap =
-                Bitmap.createBitmap(picFileToBitmap.width, picFileToBitmap.height, Bitmap.Config.ARGB_8888)
+                Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         var bitmap1 = ImageNativeUtils.imgRead(mLenaPath, currentImreadMode, bitmap)
+        Log.d("bitmap", "width:${bitmap1?.width},height:${bitmap1?.height}")
+
 //        currentMat = Imgcodecs.imread(mLenaPath, currentImreadMode)
 //        Utils.matToBitmap(currentMat, bitmap)
         iv_lena.setImageBitmap(bitmap1)
