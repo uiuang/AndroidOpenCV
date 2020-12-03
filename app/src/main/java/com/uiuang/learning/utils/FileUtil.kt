@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.TypedValue
+import java.io.File
+import java.io.FileOutputStream
 
 object FileUtil {
     fun picFileToBitmap(picFilePath: String?): Bitmap {
@@ -22,6 +24,21 @@ object FileUtil {
         options.inTargetDensity = value.density
         options.inScaled = false //不缩放
         return BitmapFactory.decodeResource(context.resources, resId, options)
+    }
+
+    fun resourceToFile(context: Context,resId: Int, defaultImgPath: String) {
+        val bitmap: Bitmap = BitmapFactory.decodeResource(context.resources, resId)
+        val file = File(defaultImgPath)
+        val fOut = FileOutputStream(file)
+        try {
+            file.createNewFile()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 20, fOut)
+            fOut.flush()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            fOut.close()
+        }
     }
 
 

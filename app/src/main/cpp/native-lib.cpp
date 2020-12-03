@@ -18,30 +18,37 @@ using namespace std;
 
 extern "C" {
 bool BitmapToMat(JNIEnv *env, jobject obj_bitmap, cv::Mat &matrix);
-bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needPremultiplyAlpha);
+bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap, jboolean needPremultiplyAlpha);
 
 JNIEXPORT jobject JNICALL
 JNI_API(imgRead)(JNIEnv *env, jobject type, jstring filename, jint flag, jobject bitmap) {
-//    Mat src;
-//    BitmapToMat(env, bitmap, src);
     const char *nativeScenePath = env->GetStringUTFChars(filename, 0);
     Mat src = imread(nativeScenePath, flag);
-    jintArray data = reinterpret_cast<jintArray>(src.data);
-    for (int i = 0; i < 10; ++i) {
-        LOGD("%d", data[i]);
-    }
-//    cv::addWeighted(src, 0.1, src1, 0.3, 0.0, src);
     MatToBitmap(env, src, bitmap, false);
     return bitmap;
 }
 
-bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needPremultiplyAlpha) {
+JNIEXPORT jboolean JNICALL
+JNI_API(imgWrite)(JNIEnv *env, jobject type, jstring filename, jobject bitmap) {
+    const char *nativeScenePath = env->GetStringUTFChars(filename, 0);
+    Mat src;
+    BitmapToMat(env, bitmap, src);
+    /**
+     * 第一个参数const String& filename表示需要写入的文件名，必须要加上后缀，比如“123.png”。
+     * 第二个参数InputArray img表示Mat类型的图像数据。
+     * 第三个参数const std::vector& params表示为特定格式保存的参数编码
+     */
+    bool write = imwrite(nativeScenePath, src);
+    return write;
+}
+
+bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap, jboolean needPremultiplyAlpha) {
     void *bitmapPixels;
     AndroidBitmapInfo bitmapInfo;
     ASSERT_FALSE(AndroidBitmap_getInfo(env, obj_bitmap, &bitmapInfo) >= 0);
     ASSERT_FALSE(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888 ||
                  bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565);
-    ASSERT_FALSE(matrix.dims == 2 );// 必须是 2 维矩阵，长宽一致
+    ASSERT_FALSE(matrix.dims == 2);// 必须是 2 维矩阵，长宽一致
     ASSERT_FALSE(matrix.type() == CV_8UC1 || matrix.type() == CV_8UC3 || matrix.type() == CV_8UC4);
     ASSERT_FALSE(AndroidBitmap_lockPixels(env, obj_bitmap, &bitmapPixels) >= 0);
     ASSERT_FALSE(bitmapPixels);
@@ -59,12 +66,12 @@ bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needP
     //         2--RGB彩色图像---------是--3通道图像
     //         3--带Alph通道的RGB图像--是--4通道图像
 
-    LOGD("rows:%dcols:%d,channels:%d",matrix.rows,matrix.cols,matrix.channels());
+    LOGD("rows:%dcols:%d,channels:%d", matrix.rows, matrix.cols, matrix.channels());
     if (bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
         if (matrix.channels() == 0) {
 
         }
-        Mat tmp(matrix.cols, matrix.rows,  CV_8UC4, bitmapPixels);
+        Mat tmp(matrix.cols, matrix.rows, CV_8UC4, bitmapPixels);
 //        bitmapInfo.width = matrix.rows;
 //        bitmapInfo.height = matrix.cols;
         Mat sz(Size(bitmapInfo.height, bitmapInfo.width), CV_8UC4);
@@ -72,7 +79,7 @@ bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needP
         int top = (sz.cols - matrix.cols) / 2;
         int right = sz.rows - left;
         int bottom = sz.cols - top;
-        LOGD("%d,%d,%d,%d",left,top,right,bottom);
+        LOGD("%d,%d,%d,%d", left, top, right, bottom);
 //        for (int row1 = 0; row1 < matrix.rows; ++row1) {
 //            for (int col1 = 0; col1 < matrix.cols; ++col1) {
 //                Vec4b src_pix  = matrix.at<Vec4b>(row1, col1);
@@ -88,7 +95,7 @@ bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needP
         if (matrix.type() == CV_8UC1) {
             LOGD("nMatToBitmap: CV_8UC1 -> RGBA_8888");
 
-            cvtColor( matrix, tmp, COLOR_GRAY2RGBA);
+            cvtColor(matrix, tmp, COLOR_GRAY2RGBA);
 //            cv::convertScaleAbs(matrix,tmp,COLOR_GRAY2RGBA)
         } else if (matrix.type() == CV_8UC3) {
             LOGD("nMatToBitmap: CV_8UC3 -> RGBA_8888");
@@ -99,7 +106,7 @@ bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needP
                 cvtColor(matrix, tmp, COLOR_RGBA2mRGBA);
             else
                 matrix.copyTo(tmp);
-        } else{
+        } else {
             matrix.copyTo(tmp);
         }
     } else {
@@ -114,7 +121,7 @@ bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap,jboolean needP
         } else if (matrix.type() == CV_8UC4) {
             LOGD("nMatToBitmap: CV_8UC4 -> RGB_565");
             cvtColor(matrix, tmp, COLOR_RGBA2BGR565);
-        } else{
+        } else {
             matrix.copyTo(tmp);
         }
     }

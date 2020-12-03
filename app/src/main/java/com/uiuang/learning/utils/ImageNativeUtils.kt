@@ -10,5 +10,7 @@ object ImageNativeUtils {
 
     external fun imgRead(fileName: String, flag: Int,bitmap: Bitmap): Bitmap?
 
+    external fun imgWrite(fileName: String,bitmap: Bitmap?):Boolean
+
 
 }
