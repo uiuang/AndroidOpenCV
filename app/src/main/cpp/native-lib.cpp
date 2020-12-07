@@ -43,41 +43,54 @@ JNI_API(imgWrite)(JNIEnv *env, jobject type, jstring filename, jobject bitmap) {
 }
 
 JNIEXPORT jobject JNICALL
-JNI_API(bitwiseNot)(JNIEnv *env, jobject type, jobject bitmap1,jobject out_bitmap) {
+JNI_API(imgColor)(JNIEnv *env, jobject type, jobject bitmap1, jobject out_bitmap) {
     Mat src;
     Mat out;
-    BitmapToMat(env, out_bitmap, src);
-    bitwise_not(src, out);
+    BitmapToMat(env, bitmap1, src);
+    cv::cvtColor(src, out, COLOR_BGR2RGB);
     MatToBitmap(env, out, out_bitmap, false);
     return out_bitmap;
 }
 
 JNIEXPORT jobject JNICALL
-JNI_API(bitwiseAnd)(JNIEnv *env, jobject type, jobject bitmap1,jobject bitmap2,jobject out_bitmap) {
+JNI_API(bitwiseNot)(JNIEnv *env, jobject type, jobject bitmap1, jobject out_bitmap) {
+    Mat src;
+    Mat out;
+    BitmapToMat(env, bitmap1, src);
+    cv::bitwise_not(src, out);
+    MatToBitmap(env, out, out_bitmap, false);
+    return out_bitmap;
+}
+
+JNIEXPORT jobject JNICALL
+JNI_API(bitwiseAnd)(JNIEnv *env, jobject type, jobject bitmap1, jobject bitmap2,
+                    jobject out_bitmap) {
     Mat in1;
     Mat in2;
     Mat out;
     BitmapToMat(env, bitmap1, in1);
     BitmapToMat(env, bitmap2, in2);
-    bitwise_and(in1, in2, out);
+    cv::bitwise_and(in1, in2, out);
     MatToBitmap(env, out, out_bitmap, false);
     return out_bitmap;
 }
 
 JNIEXPORT jobject JNICALL
-JNI_API(bitwiseOr)(JNIEnv *env, jobject type, jobject bitmap1,jobject bitmap2,jobject out_bitmap) {
+JNI_API(bitwiseOr)(JNIEnv *env, jobject type, jobject bitmap1, jobject bitmap2,
+                   jobject out_bitmap) {
     Mat in1;
     Mat in2;
     Mat out;
     BitmapToMat(env, bitmap1, in1);
     BitmapToMat(env, bitmap2, in2);
-    bitwise_or(in1, in2, out);
+    cv::bitwise_or(in1, in2, out);
     MatToBitmap(env, out, out_bitmap, false);
     return out_bitmap;
 }
 
 JNIEXPORT jobject JNICALL
-JNI_API(bitwiseXor)(JNIEnv *env, jobject type, jobject bitmap1,jobject bitmap2,jobject out_bitmap) {
+JNI_API(bitwiseXor)(JNIEnv *env, jobject type, jobject bitmap1, jobject bitmap2,
+                    jobject out_bitmap) {
     Mat in1;
     Mat in2;
     Mat out;
@@ -114,33 +127,9 @@ bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap, jboolean need
 
     LOGD("rows:%dcols:%d,channels:%d", matrix.rows, matrix.cols, matrix.channels());
     if (bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
-        if (matrix.channels() == 0) {
-
-        }
-        Mat tmp(matrix.cols, matrix.rows, CV_8UC4, bitmapPixels);
-//        bitmapInfo.width = matrix.rows;
-//        bitmapInfo.height = matrix.cols;
-        Mat sz(Size(bitmapInfo.height, bitmapInfo.width), CV_8UC4);
-        int left = (sz.rows - matrix.rows) / 2;
-        int top = (sz.cols - matrix.cols) / 2;
-        int right = sz.rows - left;
-        int bottom = sz.cols - top;
-        LOGD("%d,%d,%d,%d", left, top, right, bottom);
-//        for (int row1 = 0; row1 < matrix.rows; ++row1) {
-//            for (int col1 = 0; col1 < matrix.cols; ++col1) {
-//                Vec4b src_pix  = matrix.at<Vec4b>(row1, col1);
-//                for (int row = left; row < right; ++row) {
-//                    for (int col = top; col < bottom; ++col) {
-//                        sz.at<Vec4b>(row , col ) = src_pix;
-//                    }
-//                }
-//            }
-//        }
-
-
+        Mat tmp(bitmapInfo.width, bitmapInfo.height, CV_8UC4, bitmapPixels);
         if (matrix.type() == CV_8UC1) {
             LOGD("nMatToBitmap: CV_8UC1 -> RGBA_8888");
-
             cvtColor(matrix, tmp, COLOR_GRAY2RGBA);
 //            cv::convertScaleAbs(matrix,tmp,COLOR_GRAY2RGBA)
         } else if (matrix.type() == CV_8UC3) {

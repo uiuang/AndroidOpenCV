@@ -20,7 +20,7 @@ import java.io.FileOutputStream
 class ReadAndWriteActivity : AppCompatActivity() {
     private val name = "lena.png"
     private lateinit var path: String
-    private var source: Bitmap? = null
+    private lateinit var source: Bitmap
 
 
     private var currentMode = Imgcodecs.IMREAD_UNCHANGED
