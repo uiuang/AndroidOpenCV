@@ -42,6 +42,52 @@ JNI_API(imgWrite)(JNIEnv *env, jobject type, jstring filename, jobject bitmap) {
     return write;
 }
 
+JNIEXPORT jobject JNICALL
+JNI_API(bitwiseNot)(JNIEnv *env, jobject type, jobject bitmap1,jobject out_bitmap) {
+    Mat src;
+    Mat out;
+    BitmapToMat(env, out_bitmap, src);
+    bitwise_not(src, out);
+    MatToBitmap(env, out, out_bitmap, false);
+    return out_bitmap;
+}
+
+JNIEXPORT jobject JNICALL
+JNI_API(bitwiseAnd)(JNIEnv *env, jobject type, jobject bitmap1,jobject bitmap2,jobject out_bitmap) {
+    Mat in1;
+    Mat in2;
+    Mat out;
+    BitmapToMat(env, bitmap1, in1);
+    BitmapToMat(env, bitmap2, in2);
+    bitwise_and(in1, in2, out);
+    MatToBitmap(env, out, out_bitmap, false);
+    return out_bitmap;
+}
+
+JNIEXPORT jobject JNICALL
+JNI_API(bitwiseOr)(JNIEnv *env, jobject type, jobject bitmap1,jobject bitmap2,jobject out_bitmap) {
+    Mat in1;
+    Mat in2;
+    Mat out;
+    BitmapToMat(env, bitmap1, in1);
+    BitmapToMat(env, bitmap2, in2);
+    bitwise_or(in1, in2, out);
+    MatToBitmap(env, out, out_bitmap, false);
+    return out_bitmap;
+}
+
+JNIEXPORT jobject JNICALL
+JNI_API(bitwiseXor)(JNIEnv *env, jobject type, jobject bitmap1,jobject bitmap2,jobject out_bitmap) {
+    Mat in1;
+    Mat in2;
+    Mat out;
+    BitmapToMat(env, bitmap1, in1);
+    BitmapToMat(env, bitmap2, in2);
+    bitwise_xor(in1, in2, out);
+    MatToBitmap(env, out, out_bitmap, false);
+    return out_bitmap;
+}
+
 bool MatToBitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap, jboolean needPremultiplyAlpha) {
     void *bitmapPixels;
     AndroidBitmapInfo bitmapInfo;

@@ -7,6 +7,8 @@ import android.widget.AdapterView
 import android.widget.ListView
 import android.widget.SimpleAdapter
 import androidx.appcompat.app.AppCompatActivity
+import com.uiuang.learning.ui.MatOperationActivity
+import com.uiuang.learning.ui.PixelStatisticsActivity
 import com.uiuang.learning.ui.ReadAndWriteActivity
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -32,6 +34,19 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemClickListener {
                 mapOf(
                         "title" to "读取和保存图像",
                         "intent" to activityToIntent(ReadAndWriteActivity::class.java.name)
+                )
+        )
+        myData.add(
+                mapOf(
+                        "title" to "Mat操作",
+                        "intent" to activityToIntent(MatOperationActivity::class.java.name)
+                )
+        )
+
+        myData.add(
+                mapOf(
+                        "title" to "图像像素值统计",
+                        "intent" to activityToIntent(PixelStatisticsActivity::class.java.name)
                 )
         )
         return myData
