@@ -22,6 +22,7 @@ class MatOperationActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mat_operation)
+        supportActionBar?.title = intent.getStringExtra("title")
         bgr = FileUtil.resourceToBitmap(this, R.drawable.lena)
         source = Bitmap.createBitmap(bgr.width, bgr.height, Bitmap.Config.ARGB_8888)
         source = ImageNativeUtils.imgColor(bgr, source)
@@ -43,23 +44,18 @@ class MatOperationActivity : AppCompatActivity() {
             R.id.bitwise_and -> bitwiseAnd(source, bgr)
             R.id.bitwise_xor -> bitwiseXor(source, bgr)
             R.id.bitwise_or -> bitwiseOr(source, bgr)
-//            R.id.add
-//            -> add(source, bgr)
-//            R.id.subtract
-//            -> subtract(source, bgr)
-//            R.id.multiply
-//            -> multiply(source, bgr)
-//            R.id.divide
-//            -> divide(source, bgr)
-//            R.id.addWeight
-//            -> addWeight(source, bgr)
+            R.id.add -> add(source, bgr)
+            R.id.subtract -> subtract(source, bgr)
+            R.id.multiply -> multiply(source, bgr)
+            R.id.divide -> divide(source, bgr)
+            R.id.addWeight -> addWeight(source, bgr)
         }
         return true
     }
 
     private fun bitwiseNot(source: Bitmap) {
-        var dst: Bitmap = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
-        dst = ImageNativeUtils.bitwiseNot(source, dst)
+        val dst: Bitmap = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+        ImageNativeUtils.bitwiseNot(source, dst)
         iv_result.setImageBitmap(dst)
     }
 
@@ -82,4 +78,33 @@ class MatOperationActivity : AppCompatActivity() {
     }
 
 
+    private fun add(source: Bitmap, attach: Bitmap) {
+        var dst: Bitmap = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+        dst= ImageNativeUtils.add(source, attach, dst)
+        iv_result.setImageBitmap(dst)
+    }
+
+    private fun divide(source: Bitmap, attach: Bitmap) {
+        var dst: Bitmap = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+        dst= ImageNativeUtils.divide(source, attach, dst)
+        iv_result.setImageBitmap(dst)
+    }
+
+    private fun subtract(source: Bitmap, attach: Bitmap) {
+        var dst: Bitmap = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+        dst= ImageNativeUtils.subtract(source, attach, dst)
+        iv_result.setImageBitmap(dst)
+    }
+
+    private fun multiply(source: Bitmap, attach: Bitmap) {
+        var dst: Bitmap = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+        dst= ImageNativeUtils.multiply(source, attach, dst)
+        iv_result.setImageBitmap(dst)
+    }
+
+    private fun addWeight(source: Bitmap, attach: Bitmap) {
+        var dst: Bitmap = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+        dst = ImageNativeUtils.addWeighted(source, 0.2, attach, 0.8, 100.0, dst)
+        iv_result.setImageBitmap(dst)
+    }
 }
